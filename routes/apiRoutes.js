@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 var userController = require('../controllers/userController');
-const accessTokenSecret = 'youraccesstokensecret';
+const accessTokenSecret = 'youraccesstokensecret'; 
 
 router.get("/questions", authenticateJWT, userController.list);
 router.post("/user/save", userController.userSave);

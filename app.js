@@ -17,7 +17,7 @@ app.use("/api", apiRoutes);
 // app.use("/api", apiRoutes, jwt({ secret: 'shhhhhhared-secret'}));
 
 db.sequelize
-  .authenticate()
+  .authenticate() 
   .then(() => {
     console.log('Connection has been established successfully.');
   })
