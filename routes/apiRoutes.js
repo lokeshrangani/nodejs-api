@@ -3,9 +3,16 @@ const jwt = require('jsonwebtoken');
 var userController = require('../controllers/userController');
 const accessTokenSecret = 'youraccesstokensecret'; 
 
-router.get("/questions", authenticateJWT, userController.list);
 router.post("/user/save", userController.userSave);
 router.post("/user/login", userController.userLogin);
+
+router.get("/questions", authenticateJWT, userController.list);
+
+
+router.post("/quiz/save", authenticateJWT,userController.quizSave);
+router.post("/quiz/question/save", authenticateJWT,userController.questionSave);
+router.post("/quiz/answer/check", authenticateJWT,userController.answerCheck);
+
 
 router.get("/testToken",authenticateJWT, userController.testToken);
 

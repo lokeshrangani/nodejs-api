@@ -16,18 +16,22 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    remember_token: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    }
+    // remember_token: {
+    //   type: DataTypes.TEXT,
+    //   allowNull: true
+    // }
 
   });
-  
-  // User.sync({force: true}).then(function () {
-    // Table created
-  //   return User.create({
-  //     name: 'John'
-  //   });
-  // });
+
+  User.associate = (models) => {
+    User.hasMany(models.Quiz, {
+      foreignKey: {
+        name: 'UserFK',
+        type: DataTypes.INTEGER,
+        allowNull: false
+      },
+      as: 'quizzes'
+    });
+  };
   return User;
 };
