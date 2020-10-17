@@ -2,11 +2,19 @@ const controller = {};
 const db = require("../models");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const userModel = db.User;
 const accessTokenSecret = 'youraccesstokensecret';
 
 controller.list = (req, res) => {
-    db.User.findAll().then(todos => res.send(todos));
+    db.User.findAll().then(test => res.send(test));
+};
+
+controller.testToken = (req, res) => {
+    res.send({
+        status : true,
+        message : "Token matched", 
+        statusCode: 200
+    });
 };
 
 controller.userSave = (req, res) => {
@@ -37,12 +45,13 @@ controller.userSave = (req, res) => {
     });
 };
 
-controller.userLogin = (req, res) => {
+controller.userLogin = (req, res, next) => {
     db.User.findOne({
         where: {
             email: req.body.email,
         }
-    }).then((response) =>
+    })
+    .then((response) =>
         {
             if(response) {
                 bcrypt.compare(req.body.password, response.password, function(err, isMatch) {
@@ -56,6 +65,15 @@ controller.userLogin = (req, res) => {
                         });
                     } else {
                         const accessToken = jwt.sign({ email: req.body.email }, accessTokenSecret);
+                        // db.User.update({ 
+                        //     is_online: "Yes"
+                        //   }, {
+                        //     where: {
+                        //         id: response.id
+                        //     },
+                        //     returning: true, // needed for affectedRows to be populated
+                        //     plain: true // makes sure that the returned instances are just plain objects
+                        //   })
                         res.send({
                             status : true,
                             UserPK : response.id, 
@@ -158,28 +176,50 @@ controller.questionSave =(req,res) => {
     //     }
 
     // });
-}
+};
 
 controller.answerCheck = (req, res) => {
     var count = 0;
     const arr = req.body;
-    arr.forEach(req => { 
+    // res.send({
+    //     countTotal:arr[0].id
+    // });
+    for (let i = 0; i <= arr.length; i++) {
         db.Quesion.findOne({
             where: {
-                id: req.id,
-                status: req.selectedAns
+                id: arr[i].id,
+                status: arr[i].selectedAns
             }
         }).then((response) => {
             if(response){
-                count = count + 1;
-                console.log(count);
-                // console
+                count = i;
+                // console.log(count);
             }
         });
-        console.log("-----------");
-        console.log(count);
-        console.log("-----------");
+    }
+    res.send({
+        countTotal:count
     });
+    
+    // arr.forEach(req => { 
+    //     db.Quesion.findOne({
+    //         where: {
+    //             id: req.id,
+    //             status: req.selectedAns
+    //         }
+    //     }).then((response) => {
+    //         if(response){
+    //             count = count + 1;
+    //             // console.log(count);
+    //             return count;
+    //         }else{
+    //             count=count;
+    //         }
+    //     });
+    //     console.log("-----------");
+    //     console.log(count);
+    //     console.log("-----------");
+    // });
     // console.log(count);
     // db.Quesion.findOne({
     //     where: {
@@ -201,11 +241,5 @@ controller.answerCheck = (req, res) => {
     // });
 };
 
-controller.testToken = (req, res) => {
-    res.send({
-        status : true,
-        message : "Token matched", 
-        statusCode: 200
-    });
-};
+
 module.exports = controller;

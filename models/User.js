@@ -12,10 +12,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false
     },
-    is_online: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
+    // is_online: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true
+    // },
     // remember_token: {
     //   type: DataTypes.TEXT,
     //   allowNull: true

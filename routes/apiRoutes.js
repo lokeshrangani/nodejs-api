@@ -8,7 +8,6 @@ router.post("/user/login", userController.userLogin);
 
 router.get("/questions", authenticateJWT, userController.list);
 
-
 router.post("/quiz/save", authenticateJWT,userController.quizSave);
 router.post("/quiz/question/save", authenticateJWT,userController.questionSave);
 router.post("/quiz/answer/check", authenticateJWT,userController.answerCheck);
