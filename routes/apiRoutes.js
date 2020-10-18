@@ -3,16 +3,21 @@ const jwt = require('jsonwebtoken');
 var userController = require('../controllers/userController');
 const accessTokenSecret = 'youraccesstokensecret'; 
 
+// user API
 router.post("/user/save", userController.userSave);
 router.post("/user/login", userController.userLogin);
 
-router.get("/questions", authenticateJWT, userController.list);
+router.get("/questions", authenticateJWT, userController.list); //Questions List API
 
+// Quiz API
 router.post("/quiz/save", authenticateJWT,userController.quizSave);
 router.post("/quiz/question/save", authenticateJWT,userController.questionSave);
 router.post("/quiz/answer/check", authenticateJWT,userController.answerCheck);
 
+router.get("/quiz/question/update/:questionId", authenticateJWT,userController.questionUpdateDetails);
+router.post("/quiz/question/updateSave", authenticateJWT,userController.questionUpdateSave);
 
+// Token Test API
 router.get("/testToken",authenticateJWT, userController.testToken);
 
 // Token Verification

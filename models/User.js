@@ -20,7 +20,6 @@ module.exports = (sequelize, DataTypes) => {
     //   type: DataTypes.TEXT,
     //   allowNull: true
     // }
-
   });
 
   User.associate = (models) => {

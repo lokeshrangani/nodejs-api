@@ -120,87 +120,127 @@ controller.quizSave = (req, res) => {
 controller.questionSave =(req,res) => {
     const arr = req.body; 
     arr.forEach(req => { 
-        db.Quesion.create({
-            QuizFK: req.QuizFK,
-            InsertedBy: req.InsertedBy,
-            Quesion: req.Quesion,
-            option1: req.option1,
-            option2: req.option2,
-            option3: req.option3,
-            option4: req.option4,
-            status: req.status
-        }).then((response)=>{
-            // if(response){
-            res.send({
-                status : true,
-                // QuestionId : response.id,
-                messegge : "Question Created SuccessFully", 
-            });
-        })
-    })
-    // .then((response)=>{
-    //         // if(response){
-                res.send({
-                    status : true,
-                    // QuestionId : response.id,
-                    messegge : "Question Created SuccessFully", 
-                });
-            // }else{
-            //     res.send({
-            //         status : false,
-            //         messegge : "Something Went Wrong", 
-            //     });
-            // }
-    
-        // });
-    // db.Options.create({
-    //     QuesionFK: req.body.QuesionFK,
-    //     InsertedBy: req.body.InsertedBy,
-    //     option1: req.body.option1,
-    //     option2: req.body.option2,
-    //     option3: req.body.option3,
-    //     option4: req.body.option4,
-    //     status: req.body.status
-    // }).then((response)=>{
-    //     if(response){
-    //         res.send({
-    //             status : true,
-    //             QuestionId : response.id,
-    //             messegge : "Question Created SuccessFully", 
-    //         });
-    //     }else{
-    //         res.send({
-    //             status : false,
-    //             messegge : "Something Went Wrong", 
-    //         });
-    //     }
-
-    // });
-};
-
-controller.answerCheck = (req, res) => {
-    var count = 0;
-    const arr = req.body;
-    // res.send({
-    //     countTotal:arr[0].id
-    // });
-    for (let i = 0; i <= arr.length; i++) {
+        // check question exists or not
         db.Quesion.findOne({
             where: {
-                id: arr[i].id,
-                status: arr[i].selectedAns
+                QuizFK: req.QuizFK,
+                Quesion: req.Quesion,
+                option1: req.option1,
+                option2: req.option2,
+                option3: req.option3,
+                option4: req.option4,
+                status: req.status
             }
-        }).then((response) => {
-            if(response){
-                count = i;
-                // console.log(count);
-            }
+        }).then((check) => {
+                if(!check){
+                    db.Quesion.create({
+                        QuizFK: req.QuizFK,
+                        InsertedBy: req.InsertedBy,
+                        Quesion: req.Quesion,
+                        option1: req.option1,
+                        option2: req.option2,
+                        option3: req.option3,
+                        option4: req.option4,
+                        status: req.status
+                    })
+                }
+            })
+        })
+        res.send({
+            status : true,
+            messegge : "Question Created SuccessFully", 
         });
-    }
-    res.send({
-        countTotal:count
+};
+
+controller.questionUpdateDetails =(req,res) => {
+    questionId=req.params;
+    // console.log(questionId.questionId)
+    db.Quesion.findOne({
+        where: {
+            id: questionId.questionId,
+        }
+    }).then((check) => {   
+        res.send({
+            questionDetails: check
+        })  
     });
-    
+};
+
+controller.questionUpdateSave =(req,res) => {
+    db.Quesion.update({ 
+            QuizFK: req.body.QuizFK,
+            Quesion: req.body.Quesion,
+            option1: req.body.option1,
+            option2: req.body.option2,
+            option3: req.body.option3,
+            option4: req.body.option4,
+            status: req.body.status
+        }, {
+            where: {
+                id: req.body.questionId
+        },
+    })
+    res.send({
+        status : true,
+        messegge : "Question Update SuccessFully", 
+    });
+};
+
+controller.answerCheck = (req, res,next) => {
+    var i;
+    const arr = req.body;
+    var flag = 0;
+    var count = 0;
+    // for (let i of arr) {
+    //     count = i.id*5;
+    //     console.log(i);
+    // }
+    // console.log(count);
+
+     arr.map(( index) => {
+        var flag = 0;
+        db.Quesion.findOne({
+            where: {
+                id: index.id,
+                status: index.selectedAns
+            }
+        }).then(response => {
+            if(response) {
+                // count = count + index;
+                // return count;
+                // return index;
+                // console.log(response)
+                // return count;
+                countFunction();
+                flag = 1;
+            }
+        }).catch(err => console.log(err));
+        if(flag == 1) {
+            count = count +1;
+        }
+        function countFunction()
+        {
+            count++;
+            next();
+        }
+    });
+    // const cache = new Map();
+    // cache.set(req.body);
+
+    // for (const [ key, value ] of cache) {  
+    //     console.log(`Cache item: "${key}" with values ${JSON.stringify(value)}`)
+    //   }
+
+
+
+
+    // for (var index in arr) {  
+    //     if(index==0){
+    //         index=index+1;
+    //     }
+    //     count= index*5;
+    // }
+
     // arr.forEach(req => { 
     //     db.Quesion.findOne({
     //         where: {
@@ -210,35 +250,10 @@ controller.answerCheck = (req, res) => {
     //     }).then((response) => {
     //         if(response){
     //             count = count + 1;
-    //             // console.log(count);
-    //             return count;
-    //         }else{
-    //             count=count;
     //         }
     //     });
-    //     console.log("-----------");
-    //     console.log(count);
-    //     console.log("-----------");
     // });
-    // console.log(count);
-    // db.Quesion.findOne({
-    //     where: {
-    //         id: req.body.id,
-    //         status: req.body.selectedAns
-    //     }
-    // }).then((response) => {
-    //     if(response){
-    //         res.send({
-    //             status : true,
-    //             messegge : "Correct answer..!", 
-    //         });
-    //     }else{
-    //         res.send({
-    //             status : false,
-    //             messegge : "Wrong answer..!", 
-    //         });
-    //     }
-    // });
+
 };
 
 
