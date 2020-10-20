@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const db = require("./models");
 var bodyParser = require('body-parser');
+
 // const jwt = require('jsonwebtoken');
 var cors = require('cors')
 app.use(cors())

@@ -7,7 +7,11 @@ const accessTokenSecret = 'youraccesstokensecret';
 router.post("/user/save", userController.userSave);
 router.post("/user/login", userController.userLogin);
 
-router.get("/questions", authenticateJWT, userController.list); //Questions List API
+router.post("/user/password/sendEmail", userController.userForSendMail);
+router.get("/user/password/reset/:code", userController.userForVerifyCode);
+router.post("/user/password/update", userController.userPassUpdate);
+
+router.get("/questions/:quizId", authenticateJWT, userController.list); //Questions List API
 
 // Quiz API
 router.post("/quiz/save", authenticateJWT,userController.quizSave);

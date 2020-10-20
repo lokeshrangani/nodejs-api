@@ -1,12 +1,31 @@
 const controller = {};
 const db = require("../models");
 const bcrypt = require('bcrypt');
+const md5 = require('md5');
 const jwt = require('jsonwebtoken');
-const userModel = db.User;
+const nodemailer = require("nodemailer");
 const accessTokenSecret = 'youraccesstokensecret';
 
 controller.list = (req, res) => {
-    db.User.findAll().then(test => res.send(test));
+    quizId= req.params;
+    console.log(quizId);
+    db.Quesion.findAll({
+        where: {
+            QuizFK: quizId.quizId
+        }
+    }).then((response) => {
+        if(response != null){
+            res.send({
+                status : true,
+                question : response
+            })
+        }
+        else{
+            res.send({
+                status : false,
+            })
+        }
+    });
 };
 
 controller.testToken = (req, res) => {
@@ -65,18 +84,11 @@ controller.userLogin = (req, res, next) => {
                         });
                     } else {
                         const accessToken = jwt.sign({ email: req.body.email }, accessTokenSecret);
-                        // db.User.update({ 
-                        //     is_online: "Yes"
-                        //   }, {
-                        //     where: {
-                        //         id: response.id
-                        //     },
-                        //     returning: true, // needed for affectedRows to be populated
-                        //     plain: true // makes sure that the returned instances are just plain objects
-                        //   })
+
                         res.send({
                             status : true,
                             UserPK : response.id, 
+                            message : "Login Succesfully..!", 
                             token : accessToken,
                             statusCode: 200
                         });
@@ -93,6 +105,100 @@ controller.userLogin = (req, res, next) => {
         }
     );
 };
+
+controller.userForSendMail = (req,res) => {
+    db.User.findOne({
+        where: {
+            email: req.body.email,
+        }
+    })
+    .then((response) =>{
+        if(response){
+            let hash = md5(req.body.email);
+            var Sendlink= "localhost:3000/api/user/password/reset/"+hash;
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.ethereal.email',
+                port: 587,
+                auth: {
+                    user: 'francesca.rolfson35@ethereal.email',
+                    pass: 'SGBNF6hwshpTh7fMuG'
+                }
+            });
+
+            var mailOptions = {
+                from: '"Try Mail" <francesca.rolfson35@ethereal.email>',
+                to: 'xifeg48473@glenwoodave.com',
+                subject: 'Forgot Password',
+                text: 'Hello',
+                html: 'Link For Password Reset <a href='+Sendlink+' target="_blank">Link</a>'
+              };
+
+            transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+                res.send({
+                    status: false,
+                    message : "Something Went Wrong...Please Try Again"
+                })
+            } else {
+                db.ResetPass.create({
+                    UserFK: response.id,
+                    code: hash,
+                    status: "success"
+                })
+                res.send({
+                    status: true,
+                    message: "Messege Sent SuccessFully"
+                    // message :"Please check Your Inbox For Reset Link"
+                })
+            }
+            });
+        }
+        else{
+            res.send({
+                status:false,
+                message:"User Not Found"
+            })
+        }
+    })
+}
+
+controller.userForVerifyCode =(req,res) => {
+    reqcode=req.params;
+    db.ResetPass.findOne({
+        where: {
+          code : reqcode.code
+        },
+        order: [ [ 'createdAt', 'DESC' ]]
+      }).then((response)=>{
+        if(response){
+            res.send({
+                status: true,
+                UserFK :response.UserFK,
+                message : "User Found"
+            })
+        }else{
+            res.send({
+                status: false,
+                message : "User Not Found"
+            })
+        }
+      }); 
+}
+
+controller.userPassUpdate =(req,res) => {
+    let hash = bcrypt.hashSync(req.body.password, 10);
+    db.User.update({ 
+        password : hash
+        }, {
+        where: {
+            id: req.body.UserFK
+        },
+    })
+    res.send({
+        status:true,
+        message:"Update Success"
+    });
+}
 
 controller.quizSave = (req, res) => {
     db.Quiz.create({
@@ -187,74 +293,27 @@ controller.questionUpdateSave =(req,res) => {
 };
 
 controller.answerCheck = (req, res,next) => {
-    var i;
     const arr = req.body;
-    var flag = 0;
     var count = 0;
-    // for (let i of arr) {
-    //     count = i.id*5;
-    //     console.log(i);
-    // }
-    // console.log(count);
-
-     arr.map(( index) => {
-        var flag = 0;
+    var len = arr.length;
+    for(let i=0; i < len; i++){
         db.Quesion.findOne({
             where: {
-                id: index.id,
-                status: index.selectedAns
+                id: arr[i].id,
+                status: arr[i].selectedAns
             }
-        }).then(response => {
-            if(response) {
-                // count = count + index;
-                // return count;
-                // return index;
-                // console.log(response)
-                // return count;
-                countFunction();
-                flag = 1;
+        }).then((response) => {
+            if(response){
+                count = count+ 1;
+                console.log(count);
+            }else{
+                count = count
             }
         }).catch(err => console.log(err));
-        if(flag == 1) {
-            count = count +1;
-        }
-        function countFunction()
-        {
-            count++;
-            next();
-        }
-    });
-    // const cache = new Map();
-    // cache.set(req.body);
-
-    // for (const [ key, value ] of cache) {  
-    //     console.log(`Cache item: "${key}" with values ${JSON.stringify(value)}`)
-    //   }
-
-
-
-
-    // for (var index in arr) {  
-    //     if(index==0){
-    //         index=index+1;
-    //     }
-    //     count= index*5;
-    // }
-
-    // arr.forEach(req => { 
-    //     db.Quesion.findOne({
-    //         where: {
-    //             id: req.id,
-    //             status: req.selectedAns
-    //         }
-    //     }).then((response) => {
-    //         if(response){
-    //             count = count + 1;
-    //         }
-    //     });
-    // });
-
+    }
 };
+
+
 
 
 module.exports = controller;
