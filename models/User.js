@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false
       },
-      as: 'quizzes'
+      // as: 'quizzes'
     });
   };
   return User;

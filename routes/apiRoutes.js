@@ -10,13 +10,19 @@ router.post("/user/login", userController.userLogin);
 router.post("/user/password/sendEmail", userController.userForSendMail);
 router.get("/user/password/reset/:code", userController.userForVerifyCode);
 router.post("/user/password/update", userController.userPassUpdate);
+router.post("/user/stat",authenticateJWT, userController.userStat);
+// router.get("/user/stat", userController.userStat);
 
 router.get("/questions/:quizId", authenticateJWT, userController.list); //Questions List API
+router.get("/questions/remove/:questionId", authenticateJWT,userController.questionRemove);
 
 // Quiz API
 router.post("/quiz/save", authenticateJWT,userController.quizSave);
 router.post("/quiz/question/save", authenticateJWT,userController.questionSave);
 router.post("/quiz/answer/check", authenticateJWT,userController.answerCheck);
+router.get("/quiz/addBy/:id", authenticateJWT,userController.quizAddBy);
+router.get("/quiz/details/:id", authenticateJWT,userController.quizDetails);
+router.get("/quiz/remove/:quizId", authenticateJWT,userController.quizRemove);
 
 router.get("/quiz/question/update/:questionId", authenticateJWT,userController.questionUpdateDetails);
 router.post("/quiz/question/updateSave", authenticateJWT,userController.questionUpdateSave);

@@ -7,8 +7,12 @@ module.exports = (sequelize, DataTypes) => {
     },
     QuizStatus: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
+    QuizCode: {
+      type: DataTypes.TEXT,
+      allowNull: true
+  },
     UserFK: {
         type: DataTypes.INTEGER,
         allowNull: false
@@ -23,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
             // type: DataTypes.INTEGER,
             // allowNull: false
           },
-          as: 'questions'
+          // as: 'questions'
         });
     };
     return Quiz;

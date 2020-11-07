@@ -11,7 +11,8 @@ controller.list = (req, res) => {
     console.log(quizId);
     db.Quesion.findAll({
         where: {
-            QuizFK: quizId.quizId
+            QuizFK: quizId.quizId,
+            is_removed : "No"
         }
     }).then((response) => {
         if(response != null){
@@ -48,7 +49,14 @@ controller.userSave = (req, res) => {
                 message : "User Already Exist..!", 
                 statusCode: 200
             });
-        } else {
+        } else if(req.body.name == '' || req.body.email == '' || req.body.password==''){
+            res.send({
+                status : false,
+                message : "Blank is not allowed..!", 
+                statusCode: 200
+            });
+        }
+        else {
             let hash = bcrypt.hashSync(req.body.password, 10);
             db.User.create({
                 name: req.body.name,
@@ -87,7 +95,9 @@ controller.userLogin = (req, res, next) => {
 
                         res.send({
                             status : true,
-                            UserPK : response.id, 
+                            UserPK : response.id,
+                            UserName : response.name,
+                            UserEmail : response.email, 
                             message : "Login Succesfully..!", 
                             token : accessToken,
                             statusCode: 200
@@ -115,21 +125,21 @@ controller.userForSendMail = (req,res) => {
     .then((response) =>{
         if(response){
             let hash = md5(req.body.email);
-            var Sendlink= "localhost:3000/api/user/password/reset/"+hash;
+            var Sendlink= "http://localhost:3001/auth/reset/"+hash;
             const transporter = nodemailer.createTransport({
                 host: 'smtp.ethereal.email',
                 port: 587,
                 auth: {
-                    user: 'francesca.rolfson35@ethereal.email',
-                    pass: 'SGBNF6hwshpTh7fMuG'
+                    user: 'lilly.torp@ethereal.email',
+                    pass: 'GUV839HeTGGTcfQ7nT'
                 }
             });
 
             var mailOptions = {
-                from: '"Try Mail" <francesca.rolfson35@ethereal.email>',
-                to: 'xifeg48473@glenwoodave.com',
+                from: '"Forget Password" <lilly.torp@ethereal.email>',
+                to: req.body.email,
                 subject: 'Forgot Password',
-                text: 'Hello',
+                text: 'Hello ' +response.name ,
                 html: 'Link For Password Reset <a href='+Sendlink+' target="_blank">Link</a>'
               };
 
@@ -147,8 +157,7 @@ controller.userForSendMail = (req,res) => {
                 })
                 res.send({
                     status: true,
-                    message: "Messege Sent SuccessFully"
-                    // message :"Please check Your Inbox For Reset Link"
+                    message: "Please check Your Inbox For Reset Link"
                 })
             }
             });
@@ -166,11 +175,19 @@ controller.userForVerifyCode =(req,res) => {
     reqcode=req.params;
     db.ResetPass.findOne({
         where: {
-          code : reqcode.code
+          code : reqcode.code,
+          is_clicked : 0
         },
         order: [ [ 'createdAt', 'DESC' ]]
       }).then((response)=>{
-        if(response){
+            if(response){
+                db.ResetPass.update({ 
+                    is_clicked: 1,
+                    }, {
+                        where: {
+                            id: response.id
+                    },
+                })
             res.send({
                 status: true,
                 UserFK :response.UserFK,
@@ -179,7 +196,7 @@ controller.userForVerifyCode =(req,res) => {
         }else{
             res.send({
                 status: false,
-                message : "User Not Found"
+                message : "Link Expired"
             })
         }
       }); 
@@ -201,61 +218,111 @@ controller.userPassUpdate =(req,res) => {
 }
 
 controller.quizSave = (req, res) => {
-    db.Quiz.create({
-        QuizTitle: req.body.QuizTitle,
-        QuizStatus: req.body.QuizStatus,
-        CreatedBy: req.body.CreatedBy,
-        UserFK: req.body.UserFK
-    }).then((response)=>{
-        if(response){
-            res.send({
-                status : true,
-                QuizId : response.id,
-                messegge : "Quiz Created SuccessFully", 
-            });
-        }else{
-            res.send({
-                status : false,
-                messegge : "Something Went Wrong", 
-            });
-        }
-
-    });
+    if(req.body.QuizId !== ""){
+        db.Quiz.update({ 
+                QuizTitle: req.body.QuizTitle,
+                QuizCode: req.body.QuizCode
+            }, {
+            where: {
+                id: req.body.QuizId
+            },
+        })
+       .then((response)=>{
+            if(response){
+                res.send({
+                    status : true,
+                    QuizId : response.id,
+                    messegge : "Quiz Update SuccessFully", 
+                });
+            }else{
+                res.send({
+                    status : false,
+                    messegge : "Something Went Wrong", 
+                });
+            }
+        });
+    }else{
+        db.Quiz.create({
+            QuizTitle: req.body.QuizTitle,
+            QuizCode: req.body.QuizCode,
+            UserFK: req.body.UserFK
+        }).then((response)=>{
+            if(response){
+                res.send({
+                    status : true,
+                    QuizId : response.id,
+                    messegge : "Quiz Created SuccessFully", 
+                });
+            }else{
+                res.send({
+                    status : false,
+                    messegge : "Something Went Wrong", 
+                });
+            }
+        });
+    }    
 };
 
 controller.questionSave =(req,res) => {
-    const arr = req.body; 
-    arr.forEach(req => { 
+    const dataReq = req.body; 
+    db.Quesion.create({
+        QuizFK: dataReq.QuizFK,
+        InsertedBy: dataReq.InsertedBy,
+        Quesion: dataReq.Quesion,
+        option1: dataReq.option1,
+        option2: dataReq.option2,
+        option3: dataReq.option3,
+        option4: dataReq.option4,
+        status: dataReq.status
+    })
+
+    // arr.forEach(req => { 
         // check question exists or not
-        db.Quesion.findOne({
-            where: {
-                QuizFK: req.QuizFK,
-                Quesion: req.Quesion,
-                option1: req.option1,
-                option2: req.option2,
-                option3: req.option3,
-                option4: req.option4,
-                status: req.status
-            }
-        }).then((check) => {
-                if(!check){
-                    db.Quesion.create({
-                        QuizFK: req.QuizFK,
-                        InsertedBy: req.InsertedBy,
-                        Quesion: req.Quesion,
-                        option1: req.option1,
-                        option2: req.option2,
-                        option3: req.option3,
-                        option4: req.option4,
-                        status: req.status
-                    })
-                }
-            })
-        })
+        // db.Quesion.findOne({
+        //     where: {
+        //         QuizFK: req.QuizFK,
+        //         Quesion: req.Quesion,
+        //         option1: req.option1,
+        //         option2: req.option2,
+        //         option3: req.option3,
+        //         option4: req.option4,
+        //         status: req.status,
+        //     }
+        // }).then((check) => {
+        //         if(!check){
+        //             db.Quesion.create({
+        //                 QuizFK: req.QuizFK,
+        //                 InsertedBy: req.InsertedBy,
+        //                 Quesion: req.Quesion,
+        //                 option1: req.option1,
+        //                 option2: req.option2,
+        //                 option3: req.option3,
+        //                 option4: req.option4,
+        //                 status: req.status
+        //             })
+        //         }
+        //     })
+        // })
         res.send({
             status : true,
             messegge : "Question Created SuccessFully", 
         });
+};
+
+controller.questionRemove =(req,res) => {
+    questionId=req.params.questionId;
+    db.Quesion.update({       
+            is_removed: "Yes"
+        }, {
+        where: {
+            id: questionId,
+        },
+    }).then((respose)=>{
+        res.send({
+            status:true,
+            message:"Remove success"
+        })
+    });
 };
 
 controller.questionUpdateDetails =(req,res) => {
@@ -269,6 +336,60 @@ controller.questionUpdateDetails =(req,res) => {
         res.send({
             questionDetails: check
         })  
+    });
+};
+
+controller.quizAddBy =(req,res) => {
+    UserFK=req.params;
+    db.Quiz.findAll({
+        where: {
+            UserFK: UserFK.id,
+            QuizStatus: "Success",
+        }
+    }).then((check) => {   
+        res.send({
+            quizDetails: check
+        })  
+    });
+};
+
+controller.quizDetails =(req,res) => {
+    UserFK=req.params;
+    db.Quiz.findOne({
+        where: {
+            id: UserFK.id,
+            QuizStatus: "Success",
+        }
+    }).then((check) => {   
+        res.send({
+            quizDetails: check
+        })  
+    });
+};
+
+controller.quizRemove =(req,res) => {
+    QuizId=req.params.quizId;
+    db.Quiz.update({       
+            QuizStatus: "remove"
+        }, {
+        where: {
+            id: QuizId,
+        },
+    }).then((respose)=>{
+    var len = respose.length;
+        for(let i=0; i < len; i++){
+            db.Quesion.update({ 
+                is_removed : 'Yes'
+                }, {
+                where: {
+                    QuizFK : QuizId
+                },
+            })
+        }
+        res.send({
+            status:true,
+            message:" Remove success"
+        })
     });
 };
 
@@ -292,28 +413,61 @@ controller.questionUpdateSave =(req,res) => {
     });
 };
 
-controller.answerCheck = (req, res,next) => {
+controller.answerCheck = (req, res, next) => {
     const arr = req.body;
+    var len= Object.keys(arr).length;
+    console.log(len);
     var count = 0;
-    var len = arr.length;
-    for(let i=0; i < len; i++){
+    var temp = 0;
+    
+    Object.keys(arr).forEach(function(key) {
+        // console.table('Key : ' + key + ', Value : ' + arr[key])
+        // count = 0;
         db.Quesion.findOne({
             where: {
-                id: arr[i].id,
-                status: arr[i].selectedAns
+                id: key,
+                status: arr[key]
             }
         }).then((response) => {
             if(response){
-                count = count+ 1;
-                console.log(count);
-            }else{
-                count = count
+                ++count;
             }
-        }).catch(err => console.log(err));
-    }
+            temp++;
+            if(temp == (len-2)){
+                db.Result.create({
+                    UserFK: arr.UserFK,
+                    QuizFK	: arr.quizId,
+                    TotalMark: count*5
+                })
+                res.send({
+                    status : true,
+                    messegge : count*5, 
+                });
+            }    
+        });
+    });
 };
 
-
-
-
+controller.userStat=(req,res) => {
+    db.Result.findAll({
+        where: {
+            // id : req.body.UserPK
+            UserFK:1
+        },
+        include: [
+            {
+              model: db.User,
+              attributes: ['name']
+            },
+            {
+                model: db.Quiz,
+                attributes: ['QuizTitle']
+            }
+          ],
+    }).then(response => {
+        if(response){
+            res.send({status : true,quizDetails : response});
+        }
+    });
+}
 module.exports = controller;

@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
       status: {
         type: DataTypes.STRING,
         allowNull: true
+      },
+      is_clicked : {
+        type: DataTypes.INTEGER,
+        allowNull: true
       }
     });
     return ResetPass;

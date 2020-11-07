@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       status: {
         type: DataTypes.TEXT,
         allowNull: true
+      },
+      is_removed: {
+        type: DataTypes.TEXT,
+        allowNull: true
       }
     });
     return Quesion;
